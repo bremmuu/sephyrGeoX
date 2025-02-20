@@ -4,6 +4,28 @@ JSON_FILE="../data/phl_admin_boundaries.json"
 OUTPUT_DIR="../output"
 mkdir -p "$OUTPUT_DIR"
 
+    echo -e "\n🌍 Welcome to SephyrGeoX! 🚀"
+    echo -e "An automated tool for parsing GeoJSON coordinates and generating XLSX files.\n"
+
+    echo "🔹 How to Use:"
+    echo "1️⃣ Enter the region name (NAME_1) – This helps narrow down the location."
+    echo "2️⃣ Enter the municipality or city name (NAME_2)." 
+    echo "3️⃣ Enter the barangay name (NAME_3)."
+    echo "4️⃣ (Optional) Enter a specifier (VARNAME_3) – This provides extra details about a barangay."
+    echo "   ─ Examples: Location-based (e.g., Pob.), administrative (e.g., District 1),"
+    echo "     or sub-area (e.g., Sitio Riverside)."
+    echo ""
+    echo "⚠️ Important Note:"
+    echo "   In some cases, NAME_3 (barangay) and VARNAME_3 (specifier) might be swapped in the JSON file."
+    echo "   If you can't find the correct result after narrowing it down with NAME_1 and NAME_2,"
+    echo "   try swapping NAME_3 and VARNAME_3 when inputting them."
+    echo ""
+    echo "✅ Once you confirm the details, the tool will generate an XLSX file automatically."
+    echo "📁 Output files are saved in the specified output directory."
+    echo ""
+    echo "Happy mapping! 🌏✨"
+
+
 normalize_input() {
     echo "$1" | tr '[:upper:]' '[:lower:]' | sed 's/[ -]//g' | sed 's/n/ñ/g'
 }
@@ -46,7 +68,7 @@ while true; do
     NAME1=$(get_user_input "Enter NAME_1 (or leave blank): " true)
     NAME2=$(get_user_input "Enter NAME_2 (or leave blank): " true)
     NAME3=$(get_user_input "Enter NAME_3 (or leave blank): " true)
-    VARNAME3=$(get_user_input "Enter VARNAME_3 (or leave blank): " true)
+    VARNAME3=$(get_user_input "Enter VARNAME_3 (or leave blank to finally parse all data): " true)
 
     COORDINATES=$(process_json "$NAME1" "$NAME2" "$NAME3" "$VARNAME3")
 
@@ -55,6 +77,7 @@ while true; do
         continue
     fi
 
+    # Comment out for UI simplicity 
     echo -e "\nExtracted Coordinates with NAME_2 and NAME_3:"
     echo "$COORDINATES" | awk '{print NR ". NAME_2: "$1" | NAME_3: "$2" | Lat: "$3", Lon: "$4}'
     
@@ -63,18 +86,21 @@ UNIQUE_NAMES2=($(echo "$COORDINATES" | awk '{print $1}' | sort -u))
 if [[ ${#UNIQUE_NAMES2[@]} -gt 1 ]]; then
     echo -e "\nMultiple NAME_2 values found:"
     for i in "${!UNIQUE_NAMES2[@]}"; do
-        echo "$((i+1)). ${UNIQUE_NAMES2[$i]}"
+        echo -e "$((i+1)). ${UNIQUE_NAMES2[$i]}"
     done
+    echo 
     read -rp "Select NAME_2 (enter number): " NAME2_CHOICE
     NAME2_SELECTED="${UNIQUE_NAMES2[$((NAME2_CHOICE-1))]}"
 else
     NAME2_SELECTED="${UNIQUE_NAMES2[0]}"
 fi
 
-# Filter COORDINATES by selected NAME_2
-COORDINATES=$(echo "$COORDINATES" | awk -v name2="$NAME2_SELECTED" '$1 == name2 {print}')
-echo "DEBUG: Filtered COORDINATES after NAME_2 selection:"
-echo "$COORDINATES"
+    # Comment out for UI simplicity 
+    COORDINATES=$(echo "$COORDINATES" | awk -v name2="$NAME2_SELECTED" '$1 == name2 {print}')
+    echo -e "\nFiltered Coordinates after NAME_2 selection:"
+    echo "$COORDINATES" | awk '{print NR ". NAME_2: "$1" | NAME_3: "$2" | Lat: "$3", Lon: "$4}'
+
+
 
 # Extract unique NAME_3 values
 UNIQUE_NAMES3=($(echo "$COORDINATES" | awk '{print $2}' | sort -u))
@@ -89,11 +115,6 @@ else
     NAME3_SELECTED="${UNIQUE_NAMES3[0]}"
 fi
 
-# Filter COORDINATES by selected NAME_3
-COORDINATES=$(echo "$COORDINATES" | awk -v name3="$NAME3_SELECTED" '$2 == name3 {print}')
-echo "DEBUG: Filtered COORDINATES after NAME_3 selection:"
-echo "$COORDINATES"
-
 # Ensure values are not empty
 if [[ -z "$NAME2_SELECTED" || -z "$NAME3_SELECTED" ]]; then
     echo "Error: One or both selected names are empty."
@@ -101,6 +122,7 @@ if [[ -z "$NAME2_SELECTED" || -z "$NAME3_SELECTED" ]]; then
 fi
 
 # Prompt for Municipality ID
+echo 
 read -rp "Enter Municipality ID: " MUNICIPALITY_ID
 
 # Generate filename (convert to uppercase, replace spaces, handle special characters)
@@ -109,8 +131,8 @@ FILENAME="${FILENAME}.xlsx"
 FILE_PATH="$OUTPUT_DIR/$FILENAME"
 
 # Debugging output
-echo "DEBUG: Generated filename: $FILENAME"
-echo "DEBUG: File will be saved at: $FILE_PATH"
+#echo "DEBUG: Generated filename: $FILENAME"
+#echo "DEBUG: File will be saved at: $OUTPUT_DIR directory"
 
 # Continue with processing...
 
@@ -120,12 +142,13 @@ echo "DEBUG: File will be saved at: $FILE_PATH"
         awk -v id="$MUNICIPALITY_ID" 'BEGIN {seq=1} {print id "\t" $3 "\t" $4 "\t" seq; seq++}' <<< "$COORDINATES"
     } > "$FILE_PATH"
 
-    echo "Success! Saved as $FILE_PATH"
+    echo -e "\nSuccess! Saved as $FILE_PATH"
 
     echo -e "\nSwapped Longitude, Latitude values (for Keene State map tool):"
     echo "$COORDINATES" | awk '{print $4 "," $3}'
     echo -e "\nCopy and paste the above coordinates into https://www.keene.edu/campus/maps/tool/ to verify the locations."
 
+    echo 
     read -rp "Do you want to process another? (Y/n): " AGAIN
     AGAIN=${AGAIN,,}  
     if [[ -n "$AGAIN" && "$AGAIN" != "y" ]]; then
