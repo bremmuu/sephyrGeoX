@@ -58,33 +58,62 @@ while true; do
     echo -e "\nExtracted Coordinates with NAME_2 and NAME_3:"
     echo "$COORDINATES" | awk '{print NR ". NAME_2: "$1" | NAME_3: "$2" | Lat: "$3", Lon: "$4}'
     
-    UNIQUE_NAMES2=($(echo "$COORDINATES" | awk '{print $1}' | sort -u))
-    if [[ ${#UNIQUE_NAMES2[@]} -gt 1 ]]; then
-        echo -e "\nMultiple NAME_2 values found:"
-        for i in "${!UNIQUE_NAMES2[@]}"; do
-            echo "$((i+1)). ${UNIQUE_NAMES2[$i]}"
-        done
-        read -rp "Select NAME_2 (enter number): " NAME2_CHOICE
-        NAME2_SELECTED="${UNIQUE_NAMES2[$((NAME2_CHOICE-1))]}"
-        COORDINATES=$(echo "$COORDINATES" | awk -v name2="$NAME2_SELECTED" '$1 == name2')
-    fi
-    
-    UNIQUE_NAMES3=($(echo "$COORDINATES" | awk '{print $2}' | sort -u))
-    if [[ ${#UNIQUE_NAMES3[@]} -gt 1 ]]; then
-        echo -e "\nMultiple NAME_3 values found:"
-        for i in "${!UNIQUE_NAMES3[@]}"; do
-            echo "$((i+1)). ${UNIQUE_NAMES3[$i]}"
-        done
-        read -rp "Select NAME_3 (enter number): " NAME3_CHOICE
-        NAME3_SELECTED="${UNIQUE_NAMES3[$((NAME3_CHOICE-1))]}"
-        COORDINATES=$(echo "$COORDINATES" | awk -v name3="$NAME3_SELECTED" '$2 == name3')
-    fi
-    
-    read -rp "Enter Municipality ID: " MUNICIPALITY_ID
+# Extract unique NAME_2 values
+UNIQUE_NAMES2=($(echo "$COORDINATES" | awk '{print $1}' | sort -u))
+if [[ ${#UNIQUE_NAMES2[@]} -gt 1 ]]; then
+    echo -e "\nMultiple NAME_2 values found:"
+    for i in "${!UNIQUE_NAMES2[@]}"; do
+        echo "$((i+1)). ${UNIQUE_NAMES2[$i]}"
+    done
+    read -rp "Select NAME_2 (enter number): " NAME2_CHOICE
+    NAME2_SELECTED="${UNIQUE_NAMES2[$((NAME2_CHOICE-1))]}"
+else
+    NAME2_SELECTED="${UNIQUE_NAMES2[0]}"
+fi
 
-    FILENAME="$(echo "${NAME3_SELECTED}_${NAME2_SELECTED}" | tr '[:upper:]' '[:lower:]' | sed 's/ñ/n/g' | tr '[:lower:]' '[:upper:]')"
-    FILENAME="${FILENAME// /_}.xlsx" 
-    FILE_PATH="$OUTPUT_DIR/$FILENAME"
+# Filter COORDINATES by selected NAME_2
+COORDINATES=$(echo "$COORDINATES" | awk -v name2="$NAME2_SELECTED" '$1 == name2 {print}')
+echo "DEBUG: Filtered COORDINATES after NAME_2 selection:"
+echo "$COORDINATES"
+
+# Extract unique NAME_3 values
+UNIQUE_NAMES3=($(echo "$COORDINATES" | awk '{print $2}' | sort -u))
+if [[ ${#UNIQUE_NAMES3[@]} -gt 1 ]]; then
+    echo -e "\nMultiple NAME_3 values found:"
+    for i in "${!UNIQUE_NAMES3[@]}"; do
+        echo "$((i+1)). ${UNIQUE_NAMES3[$i]}"
+    done
+    read -rp "Select NAME_3 (enter number): " NAME3_CHOICE
+    NAME3_SELECTED="${UNIQUE_NAMES3[$((NAME3_CHOICE-1))]}"
+else
+    NAME3_SELECTED="${UNIQUE_NAMES3[0]}"
+fi
+
+# Filter COORDINATES by selected NAME_3
+COORDINATES=$(echo "$COORDINATES" | awk -v name3="$NAME3_SELECTED" '$2 == name3 {print}')
+echo "DEBUG: Filtered COORDINATES after NAME_3 selection:"
+echo "$COORDINATES"
+
+# Ensure values are not empty
+if [[ -z "$NAME2_SELECTED" || -z "$NAME3_SELECTED" ]]; then
+    echo "Error: One or both selected names are empty."
+    exit 1
+fi
+
+# Prompt for Municipality ID
+read -rp "Enter Municipality ID: " MUNICIPALITY_ID
+
+# Generate filename (convert to uppercase, replace spaces, handle special characters)
+FILENAME="$(echo "${NAME3_SELECTED}_${NAME2_SELECTED}" | tr '[:lower:]' '[:upper:]' | sed 's/ñ/N/g' | tr ' ' '_')"
+FILENAME="${FILENAME}.xlsx" 
+FILE_PATH="$OUTPUT_DIR/$FILENAME"
+
+# Debugging output
+echo "DEBUG: Generated filename: $FILENAME"
+echo "DEBUG: File will be saved at: $FILE_PATH"
+
+# Continue with processing...
+
 
     {
         echo -e "municipality_id\tlatitude\tlongitude\tsequence_no"
