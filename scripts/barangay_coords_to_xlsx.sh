@@ -82,9 +82,11 @@ while true; do
     
     read -rp "Enter Municipality ID: " MUNICIPALITY_ID
 
-    FILENAME="$(echo "${NAME3_SELECTED}_${NAME2_SELECTED}" | tr '[:upper:]' '[:lower:]' | sed 's/ñ/n/g' | tr '[:lower:]' '[:upper:]')"
-    FILENAME="${FILENAME// /_}.xlsx" 
-    FILE_PATH="$OUTPUT_DIR/$FILENAME"
+NAME3_SELECTED="${NAME3_SELECTED:-UNKNOWN}"
+FILENAME="$(echo "${NAME3_SELECTED}" | tr -d ' ' | sed 's/ñ/n/g' | tr '[:lower:]' '[:upper:]')"
+FILENAME="${FILENAME}_$(echo "${NAME2_SELECTED}" | tr -d ' ' | tr '[:lower:]' '[:upper:]').xlsx"
+FILE_PATH="$OUTPUT_DIR/$FILENAME"
+
 
     {
         echo -e "municipality_id\tlatitude\tlongitude\tsequence_no"
