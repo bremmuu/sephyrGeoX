@@ -91,6 +91,7 @@ if [[ ${#UNIQUE_NAMES2[@]} -gt 1 ]]; then
     echo 
     read -rp "Select NAME_2 (enter number): " NAME2_CHOICE
     NAME2_SELECTED="${UNIQUE_NAMES2[$((NAME2_CHOICE-1))]}"
+    COORDINATES=$(echo "$COORDINATES" | awk -v name2="$NAME2_SELECTED" '$1 == name2')
 else
     NAME2_SELECTED="${UNIQUE_NAMES2[0]}"
 fi
@@ -99,8 +100,6 @@ fi
     COORDINATES=$(echo "$COORDINATES" | awk -v name2="$NAME2_SELECTED" '$1 == name2 {print}')
     echo -e "\nFiltered Coordinates after NAME_2 selection:"
     echo "$COORDINATES" | awk '{print NR ". NAME_2: "$1" | NAME_3: "$2" | Lat: "$3", Lon: "$4}'
-
-
 
 # Extract unique NAME_3 values
 UNIQUE_NAMES3=($(echo "$COORDINATES" | awk '{print $2}' | sort -u))
@@ -111,6 +110,7 @@ if [[ ${#UNIQUE_NAMES3[@]} -gt 1 ]]; then
     done
     read -rp "Select NAME_3 (enter number): " NAME3_CHOICE
     NAME3_SELECTED="${UNIQUE_NAMES3[$((NAME3_CHOICE-1))]}"
+    COORDINATES=$(echo "$COORDINATES" | awk -v name3="$NAME3_SELECTED" '$2 == name3')
 else
     NAME3_SELECTED="${UNIQUE_NAMES3[0]}"
 fi
@@ -125,6 +125,14 @@ fi
 echo 
 read -rp "Enter Municipality ID: " MUNICIPALITY_ID
 
+# Display final selected coordinates
+echo -e "\nFinal Extracted Coordinates:"
+echo -e "--------------------------------------------------------"
+echo -e " municipality_id | latitude  | longitude | sequence_no |"
+echo -e "--------------------------------------------------------"
+awk -v id="$MUNICIPALITY_ID" 'BEGIN {seq=1} {printf " %-15s | %-9s | %-9s | %-11d |\n", id, $3, $4, seq++;}' <<< "$COORDINATES"
+echo -e "--------------------------------------------------------"
+
 # Generate filename (convert to uppercase, replace spaces, handle special characters)
 FILENAME="$(echo "${NAME3_SELECTED}_${NAME2_SELECTED}" | tr '[:lower:]' '[:upper:]' | sed 's/ñ/N/g' | tr ' ' '_')"
 FILENAME="${FILENAME}.xlsx" 
@@ -135,7 +143,6 @@ FILE_PATH="$OUTPUT_DIR/$FILENAME"
 #echo "DEBUG: File will be saved at: $OUTPUT_DIR directory"
 
 # Continue with processing...
-
 
     {
         echo -e "municipality_id\tlatitude\tlongitude\tsequence_no"
