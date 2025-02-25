@@ -122,16 +122,16 @@ if [[ -z "$NAME2_SELECTED" || -z "$NAME3_SELECTED" ]]; then
 fi
 
 # Prompt for Municipality ID
-echo 
-read -rp "Enter Municipality ID: " MUNICIPALITY_ID
+    echo 
+    read -rp "Enter Municipality ID: " MUNICIPALITY_ID
 
 # Display final selected coordinates
-echo -e "\nFinal Extracted Coordinates:"
-echo -e "--------------------------------------------------------"
-echo -e " municipality_id | latitude  | longitude | sequence_no |"
-echo -e "--------------------------------------------------------"
-awk -v id="$MUNICIPALITY_ID" 'BEGIN {seq=1} {printf " %-15s | %-9s | %-9s | %-11d |\n", id, $3, $4, seq++;}' <<< "$COORDINATES"
-echo -e "--------------------------------------------------------"
+    echo -e "\nFinal Extracted Coordinates:"
+    echo -e "--------------------------------------------------------"
+    echo -e " municipality_id | latitude  | longitude | sequence_no |"
+    echo -e "--------------------------------------------------------"
+    awk -v id="$MUNICIPALITY_ID" 'BEGIN {seq=1} {printf " %-15s | %-9s | %-9s | %-11d |\n", id, $3, $4, seq++;}' <<< "$COORDINATES"
+    echo -e "--------------------------------------------------------"
 
 # Generate filename (convert to uppercase, replace spaces, handle special characters)
 FILENAME="$(echo "${NAME3_SELECTED}_${NAME2_SELECTED}" | tr '[:lower:]' '[:upper:]' | sed 's/ñ/N/g' | tr ' ' '_')"
@@ -154,6 +154,17 @@ FILE_PATH="$OUTPUT_DIR/$FILENAME"
     echo -e "\nSwapped Longitude, Latitude values (for Keene State map tool):"
     echo "$COORDINATES" | awk '{print $4 "," $3}'
     echo -e "\nCopy and paste the above coordinates into https://www.keene.edu/campus/maps/tool/ to verify the locations."
+
+# Extract first and last latitude-longitude
+FIRST_COORD=$(echo "$COORDINATES" | head -n1 | awk '{print $3, $4}')
+LAST_COORD=$(echo "$COORDINATES" | tail -n1 | awk '{print $3, $4}')
+
+# Check if first and last coordinates match
+if [[ "$FIRST_COORD" != "$LAST_COORD" ]]; then
+    echo -e "\n⚠️ WARNING: First and last coordinates do NOT match!"
+    echo "This indicates the polygon is not closed properly."
+    echo "Please run the fix script: python3 fix_sequence.py"
+fi
 
     echo 
     read -rp "Do you want to process another? (Y/n): " AGAIN
