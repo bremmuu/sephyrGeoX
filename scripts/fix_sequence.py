@@ -76,6 +76,25 @@ fixed_df["sequence_no"] = range(1, len(fixed_df) + 1)
 # 🔥 **Reorder columns to: municipality_id, latitude, longitude, sequence_no**
 fixed_df = fixed_df[["municipality_id", "latitude", "longitude", "sequence_no"]]
 
+def display_fixed_coordinates(df):
+    """Display the final fixed sequence in a clean table format."""
+    print("\n Final Fixed Coordinates:")
+    print("--------------------------------------------------------")
+    print(f"{'municipality_id':<15} | {'latitude':<10} | {'longitude':<10} | {'sequence_no':<11}")
+    print("--------------------------------------------------------")
+
+    for _, row in df.iterrows():
+        print(f"{int(row['municipality_id']):<15} | {row['latitude']:<10.4f} | {row['longitude']:<10.4f} | {int(row['sequence_no']):<11}")
+
+    print("--------------------------------------------------------")
+
+# 📢 Show final sequence before saving
+display_fixed_coordinates(fixed_df)
+
+# Ensure municipality_id is stored as an integer
+fixed_df["municipality_id"] = fixed_df["municipality_id"].astype(int)
+fixed_df["sequence_no"] = fixed_df["sequence_no"].astype(int)
+
 # Save as TSV but with .xlsx extension
 output_file = os.path.join(output_dir, "fixed_" + os.path.basename(selected_file))
 fixed_df.to_csv(output_file, sep="\t", index=False, encoding="utf-8")
