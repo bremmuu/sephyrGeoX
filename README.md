@@ -42,7 +42,7 @@ SephyrGeoX will be packaged into a `.exe` file for Windows users, ensuring all d
 2. Assign an ID to the barangay and verify coordinates using the Keene State Map Tool.
 3. Generate an XLSX file, named appropriately based on barangay and municipality.
 4. Organize the generated files into a structured directory.
-5. Upload the output to the DepEd School GIS backend.
+5. Upload the output to the DepEd School GIS website.
 
 ## Future Improvements
 - Windows `.exe` packaging for easy execution without Python installation.
